@@ -33,14 +33,26 @@ def main():
 
         relative_path = source.relative_to(RAW_DIR)
         noise_destination = CLEAN_DIR / relative_path
-        process_destination = PROCESSED_DIR / relative_path
 
         remove_noise_from_file(source, noise_destination)
-        process_file(source, process_destination)
 
         processed += 1
         print(f"✓ {relative_path}")
 
+    print()
+    print(f"Обработано файлов: {processed}")
+    print(f"Результат: {CLEAN_DIR}")
+
+    files_without_noise = list(CLEAN_DIR.rglob("*.txt"))
+    for source in files_without_noise:
+        relative_path = source.relative_to(CLEAN_DIR)
+        process_destination = PROCESSED_DIR / relative_path
+
+        process_file(noise_destination, process_destination)
+
+        processed += 1
+        print(f"✓ {relative_path}")
+    
     print()
     print(f"Обработано файлов: {processed}")
     print(f"Результат: {CLEAN_DIR}")
