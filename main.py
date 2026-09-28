@@ -35,8 +35,6 @@ def main():
         noise_destination = CLEAN_DIR / relative_path
         process_destination = PROCESSED_DIR / relative_path
 
-        if str(source).startswith("C:\\Users\\vanay\\Desktop\\ta\\political_corpus\\texts\\raw\\atabekian") or str(source).startswith("C:\\Users\\vanay\\Desktop\\ta\\political_corpus\\texts\\raw\\bakunin") or str(source).startswith("C:\\Users\\vanay\\Desktop\\ta\\political_corpus\\texts\\raw\\bukharin"):
-            continue
         remove_noise_from_file(source, noise_destination)
         process_file(source, process_destination)
 
