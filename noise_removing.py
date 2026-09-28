@@ -1,22 +1,27 @@
 from pathlib import Path
 import re
 
+
 def remove_square_and_curly(text: str) -> str:
     """Удаляет содержимое [] и {} вместе со скобками."""
 
-    # Удаляем содержимое квадратных скобок
+    # Квадратные скобки
     text = re.sub(r"\[[^\]]*\]", "", text)
 
-    # Удаляем содержимое фигурных скобок
+    # Фигурные скобки
     text = re.sub(r"\{[^}]*\}", "", text)
+
+    # Скобки <<>>
+    text = re.sub(r"<<[^>]*>>", "", text)
 
     return text
 
 
 def remove_page_references(text: str) -> str:
     """
-    Удаляет круглые скобки, если внутри них встречается
-    'стр' или 'стр.'.
+    Удаляет круглые скобки, если внутри них встречается:
+    стр / стр.
+    см / см.
 
     Например:
     (стр. 25) -> удаляется
@@ -25,17 +30,44 @@ def remove_page_references(text: str) -> str:
     (т. е. государство) -> остается
     """
 
-    pattern = r"\([^()]*\bстр\.?\b[^()]*\)"
+    pattern = r"\([^()]*\b(?:стр\.?|см\.?)\b[^()]*\)"
 
-    return re.sub(
-        pattern,
-        "",
-        text,
-        flags=re.IGNORECASE
-    )
+    return re.sub(pattern, "", text, flags=re.IGNORECASE)
 
 
-def clean_line(line: str) -> str:
+def remove_strict_parentheses(text: str) -> str:
+    """
+    Более строгая обработка круглых скобок.
+
+    Удаляет ВСЮ скобку, если внутри есть:
+    - хотя бы одна цифра
+    - двойные кавычки "
+
+    Примеры:
+
+    (123)                  -> удалить
+    (стр. 25)              -> удалить
+    (1902 год)             -> удалить
+    ("цитата")             -> удалить
+    (см. "Государство")    -> удалить
+    (т. е. 1902 года)      -> удалить
+
+    Но:
+
+    (государство)          -> оставить
+    (т. е. государство)    -> оставить
+    (буржуазия)            -> оставить
+    """
+
+    # Ищем круглые скобки без вложенных круглых скобок.
+    # Если внутри есть цифра ИЛИ двойная кавычка — удаляем всю конструкцию.
+
+    pattern = r'\([^()]*[0-9"][^()]*\)'
+
+    return re.sub(pattern, "", text)
+
+
+def clean_line(line: str, strict_parentheses: bool = False) -> str:
     """Очистка одного абзаца."""
 
     # Убираем BOM
@@ -44,8 +76,12 @@ def clean_line(line: str) -> str:
     # [] и {} удаляются полностью
     line = remove_square_and_curly(line)
 
-    # () удаляются только если внутри есть 'стр' / 'стр.'
+    # Обычное удаление ссылок внутри ()
     line = remove_page_references(line)
+
+    # Для специального файла — ужесточаем правила ()
+    if strict_parentheses:
+        line = remove_strict_parentheses(line)
 
     # Табуляции -> пробел
     line = line.replace("\t", " ")
@@ -77,8 +113,10 @@ def remove_noise_from_file(source: Path, destination: Path):
         # Запасной вариант для старых русских файлов
         text = source.read_text(encoding="cp1251")
 
-    lines = text.splitlines()
+    # Проверяем, является ли это специальным файлом
+    strict_parentheses = source.name == "РАЗВИТИЕ КАПИТАЛИЗМА В РОССИИ.txt"
 
+    lines = text.splitlines()
     cleaned_lines = []
 
     for line in lines:
@@ -87,7 +125,10 @@ def remove_noise_from_file(source: Path, destination: Path):
         if is_separator(line):
             continue
 
-        line = clean_line(line)
+        line = clean_line(
+            line,
+            strict_parentheses=strict_parentheses
+        )
 
         # Пустые строки не сохраняем
         if not line:
