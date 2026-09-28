@@ -1,14 +1,6 @@
 from pathlib import Path
 import re
 
-
-# Корень проекта
-BASE_DIR = Path(__file__).resolve().parent / "political_corpus"
-
-RAW_DIR = BASE_DIR / "texts" / "raw"
-CLEAN_DIR = BASE_DIR / "texts" / "clean"
-
-
 def remove_square_and_curly(text: str) -> str:
     """Удаляет содержимое [] и {} вместе со скобками."""
 
@@ -76,7 +68,7 @@ def is_separator(line: str) -> bool:
     return bool(re.fullmatch(r"\s*(?:\*\s*){3,}", line))
 
 
-def process_file(source: Path, destination: Path):
+def remove_noise_from_file(source: Path, destination: Path):
     """Обрабатывает один txt-файл."""
 
     try:
@@ -112,42 +104,3 @@ def process_file(source: Path, destination: Path):
         result + "\n",
         encoding="utf-8"
     )
-
-
-def main():
-
-    if not RAW_DIR.exists():
-        print(f"ОШИБКА: папка не найдена:\n{RAW_DIR}")
-        return
-
-    files = list(RAW_DIR.rglob("*.txt"))
-
-    if not files:
-        print("TXT-файлы не найдены.")
-        return
-
-    processed = 0
-
-    for source in files:
-
-        # Сохраняем структуру папок:
-        #
-        # raw/lenin/Государство и революция.txt
-        # ->
-        # clean/lenin/Государство и революция.txt
-
-        relative_path = source.relative_to(RAW_DIR)
-        destination = CLEAN_DIR / relative_path
-
-        process_file(source, destination)
-
-        processed += 1
-        print(f"✓ {relative_path}")
-
-    print()
-    print(f"Обработано файлов: {processed}")
-    print(f"Результат: {CLEAN_DIR}")
-
-
-if __name__ == "__main__":
-    main()
