@@ -48,7 +48,7 @@ def main():
         relative_path = source.relative_to(CLEAN_DIR)
         process_destination = PROCESSED_DIR / relative_path
 
-        process_file(noise_destination, process_destination)
+        process_file(source, process_destination)
 
         processed += 1
         print(f"✓ {relative_path}")
