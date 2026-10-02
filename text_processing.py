@@ -1,8 +1,6 @@
 from pathlib import Path
 import stanza
 
-MISSING = "—"
-
 def process_file(source: Path, destination: Path):
     stanza.download('ru')
 
@@ -11,10 +9,10 @@ def process_file(source: Path, destination: Path):
     nlp = stanza.Pipeline('ru', processors='tokenize,pos,lemma,depparse')
 
     doc = nlp(text)
-    result = {}
+    result = []
     for sent in doc.sentences:
         for w in sent.words:
-            result[w.text] = {"stem": MISSING, "lemma": w.lemma, "pos": w.upos}
+            result.append({"origin": w.text, "lemma": w.lemma, "pos": w.upos})
 
     destination.parent.mkdir(parents=True, exist_ok=True)
 
