@@ -2,7 +2,7 @@ from pathlib import Path
 import re
 import ast
 
-from summa import keywords
+from summa.keywords import keywords
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 
@@ -17,7 +17,7 @@ TEXTRANK_TOP_N = 50
 TEXTRANK_VOCAB_SIZE = 100
 
 # Максимальное количество TF-IDF-признаков
-TFIDF_MAX_FEATURES = 1000
+TFIDF_MAX_FEATURES = 150
 
 
 # ============================================================
@@ -127,47 +127,36 @@ def get_textrank_scores(
     top_n: int = TEXTRANK_TOP_N
 ) -> dict:
     """
-    Возвращает словарь:
-
-        {
-            "государство": 0.083,
-            "власть": 0.061,
-            ...
-        }
-
-    для одного текста.
-
-    TextRank считается независимо для каждого текста.
+    Возвращает словарь {слово: score} для одного текста.
     """
-
     features = {}
 
     if not text.strip():
         return features
 
     try:
-
         result = keywords(
             text,
             words=top_n,
+            language="russian",   # ← обязательно для русского
             split=True,
-            scores=True
+            scores=True,
         )
+    except Exception as e:
+        print(f"  ⚠ TextRank FAIL: {type(e).__name__}: {e}")
+        return features
 
-    except Exception:
+    if not result:
+        print(f"  ⚠ TextRank пуст (длина текста: {len(text.split())} слов)")
         return features
 
     for word, score in result:
-
         word = normalize_word(word)
-
         if not word:
             continue
-
         features[word] = float(score)
 
     return features
-
 
 # ============================================================
 # СОЗДАНИЕ ОБЩЕГО TEXT RANK VOCABULARY

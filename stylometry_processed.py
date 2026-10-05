@@ -65,7 +65,7 @@ def metric_pos_ngrams(tokens: list[dict], n: int, top_k: int | None = None) -> C
 POS_NGRAM_TOP: dict[int, list[tuple[str, ...]]] = {1: [], 2: [], 3: [], 4: []}
 
 
-def collect_top_pos_ngrams(processed_paths: list[Path], top_k: int = 20) -> dict:
+def collect_top_pos_ngrams(processed_paths: list[Path], top_k: int = 10) -> dict:
     """Первый проход: собирает глобальные топ-K N-грамм каждой длины."""
     top_by_n: dict[int, list[tuple[str, ...]]] = {}
     for n in (1, 2, 3, 4):
