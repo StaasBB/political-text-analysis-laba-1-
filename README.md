@@ -15,9 +15,8 @@ texts/processed
 
 
 ----------------
-authors.csv (неактуальна)
-
-Таблица с метаданными произведений:
+authors.csv
+Микро таблица с метаданными произведений:
 
 Поле	Значение
 text_id	Уникальный идентификатор текста
@@ -29,12 +28,7 @@ style	Описательная характеристика текста
 
 quadrant используется как целевая категория при классификации, а не как стилометрический признак.
 -------------
-text_stats.csv  (неактуальна дублируеться в text_stats_train_test_split.csv)
-статистика файлов 
-
-
--------------------
-text_stats_train_test_split.csv
+texts_table.csv
 
 text_id,author,filename,line_count,nonempty_line_count,sentence_count,word_count,char_count,quadrant,work,genre,style,split
 
