@@ -94,12 +94,14 @@ PROCESSED_DIR = (
 
 TEXTS_TABLE_CSV = (
     BASE_DIR
-    / "texts_table.csv"
+    #/ "texts_table.csv"
+    / "supertest_texts_table.csv"
 )
 
 FEATURES_CSV = (
     BASE_DIR
-    / "features.csv"
+    #/ "features.csv"
+    / "supertest_features.csv"
 )
 
 

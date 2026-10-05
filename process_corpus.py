@@ -4,7 +4,8 @@ from text_processing import process_file
 
 BASE_DIR = Path(__file__).resolve().parent / "political_corpus"
 
-CLEAN_DIR = BASE_DIR / "texts" / "clean"
+#CLEAN_DIR = BASE_DIR / "texts" / "clean"
+CLEAN_DIR = BASE_DIR / "texts" / "clean" / "test"
 PROCESSED_DIR = BASE_DIR / "texts" / "processed"
 
 
