@@ -35,14 +35,6 @@ def metric_pos_distribution(tokens: list[dict]) -> dict:
     return {f"pos_{tag}": counter.get(tag, 0) / total for tag in KEY_POS}
 
 
-# ----------POS-счётчики
-
-def metric_pos_counts(tokens: list[dict]) -> dict:
-    """Абсолютное количество токенов каждой из 5 ключевых частей речи."""
-    counter = Counter(t["pos"] for t in tokens)
-    return {f"n_{tag}": counter.get(tag, 0) for tag in KEY_POS}
-
-
 # ----------POS N-граммы
 
 def _split_by_sentences(tokens: list[dict]) -> list[list[dict]]:
@@ -111,6 +103,5 @@ def extract_processed_features(processed_path: Path) -> dict:
     tokens = load_processed(processed_path)
     feats = {}
     feats.update(metric_pos_distribution(tokens))   # 5 колонок
-    feats.update(metric_pos_counts(tokens))         # 5 колонок
     feats.update(metric_pos_ngram_features(tokens)) # 20×4 = 80 колонок
     return feats
