@@ -14,7 +14,7 @@ from sklearn.metrics import f1_score
 # 1. ДАННЫЕ
 # ============================================================
 
-df = pd.read_csv('political_corpus/supertest_features.csv')
+df = pd.read_csv('political_corpus/features.csv')
 
 drop_cols = [
     'quadrant',
@@ -165,39 +165,64 @@ def softmax(scores):
 
 
 # ============================================================
-# 8. ПРЕОБРАЗОВАНИЕ ВЕРОЯТНОСТЕЙ В КООРДИНАТЫ
+# 8. КООРДИНАТЫ ПОЛИТИЧЕСКОГО КОМПАСА
 # ============================================================
 
 def probabilities_to_point(probabilities):
 
     """
-    Q1 = нижний левый  (-1, -1)
-    Q2 = нижний правый (+1, -1)
-    Q3 = верхний правый (+1, +1)
-    Q4 = верхний левый  (-1, +1)
+    ПОЛИТИЧЕСКИЙ КОМПАС
+
+                    ЛЕВО                  ПРАВО
+
+             Q2 КОММУНИСТЫ          Q3 МОНАРХИСТЫ
+                (-1, +1)               (+1, +1)
+
+             Q1 АНПРИМ               Q4 АНКАП
+                (-1, -1)               (+1, -1)
+
+
+    Q1 = нижний левый
+    Q2 = верхний левый
+    Q3 = верхний правый
+    Q4 = нижний правый
     """
 
     q1, q2, q3, q4 = probabilities
 
+    # X:
+    #
+    # Q1 = -1
+    # Q2 = -1
+    # Q3 = +1
+    # Q4 = +1
+
     x = (
         -q1
-        + q2
-        + q3
-        - q4
+        -q2
+        +q3
+        +q4
     )
+
+    # Y:
+    #
+    # Q1 = -1
+    # Q2 = +1
+    # Q3 = +1
+    # Q4 = -1
 
     y = (
         -q1
-        - q2
-        + q3
-        + q4
+        +q2
+        +q3
+        -q4
     )
 
     return x, y
 
 
 # ============================================================
-# 9. ASCII-ПОЛИТИЧЕСКИЙ КОМПАС
+# 9. ASCII-КОМПАС
 # ============================================================
 
 def print_compass(rf_point, svm_point, mean_point):
@@ -221,9 +246,9 @@ def print_compass(rf_point, svm_point, mean_point):
         for _ in range(HEIGHT)
     ]
 
-    # --------------------------------------------------------
-    # Координаты → координаты ASCII
-    # --------------------------------------------------------
+    # ========================================================
+    # КООРДИНАТЫ → ASCII
+    # ========================================================
 
     def to_grid(x, y):
 
@@ -244,9 +269,9 @@ def print_compass(rf_point, svm_point, mean_point):
 
         return gx, gy
 
-    # --------------------------------------------------------
-    # Оси
-    # --------------------------------------------------------
+    # ========================================================
+    # ОСИ
+    # ========================================================
 
     zero_x, zero_y = to_grid(0, 0)
 
@@ -258,12 +283,9 @@ def print_compass(rf_point, svm_point, mean_point):
 
     grid[zero_y][zero_x] = '┼'
 
-    # --------------------------------------------------------
-    # Область между RF и SVM
-    # --------------------------------------------------------
-
-    # Чем больше расхождение моделей,
-    # тем больше область.
+    # ========================================================
+    # ОБЛАСТЬ РАСХОЖДЕНИЯ RF / SVM
+    # ========================================================
 
     area_min_x = min(rf_x, svm_x)
     area_max_x = max(rf_x, svm_x)
@@ -271,9 +293,17 @@ def print_compass(rf_point, svm_point, mean_point):
     area_min_y = min(rf_y, svm_y)
     area_max_y = max(rf_y, svm_y)
 
-    # Небольшой размер области даже при совпадении.
-    padding_x = max(abs(rf_x - svm_x) * 0.35, 0.025)
-    padding_y = max(abs(rf_y - svm_y) * 0.35, 0.025)
+    # Небольшая область даже при близких точках
+
+    padding_x = max(
+        abs(rf_x - svm_x) * 0.35,
+        0.025
+    )
+
+    padding_y = max(
+        abs(rf_y - svm_y) * 0.35,
+        0.025
+    )
 
     area_min_x -= padding_x
     area_max_x += padding_x
@@ -303,36 +333,42 @@ def print_compass(rf_point, svm_point, mean_point):
             ):
 
                 if grid[gy][gx] == ' ':
-
                     grid[gy][gx] = '░'
 
-    # --------------------------------------------------------
-    # Точки
-    # --------------------------------------------------------
+    # ========================================================
+    # ТОЧКИ
+    # ========================================================
 
-    rf_gx, rf_gy = to_grid(rf_x, rf_y)
-    svm_gx, svm_gy = to_grid(svm_x, svm_y)
-    mean_gx, mean_gy = to_grid(mean_x, mean_y)
+    rf_gx, rf_gy = to_grid(
+        rf_x,
+        rf_y
+    )
 
-    # Сначала RF
+    svm_gx, svm_gy = to_grid(
+        svm_x,
+        svm_y
+    )
+
+    mean_gx, mean_gy = to_grid(
+        mean_x,
+        mean_y
+    )
+
+    # RF
+
     grid[rf_gy][rf_gx] = 'R'
 
-    # Потом SVM
+    # SVM
+
     grid[svm_gy][svm_gx] = 'S'
 
     # Средняя точка
+
     grid[mean_gy][mean_gx] = 'M'
 
-    # Если точки совпали — обозначаем их отдельно.
-    if (
-        rf_gx == svm_gx
-        and rf_gy == svm_gy
-    ):
-        grid[rf_gy][rf_gx] = 'M'
-
-    # --------------------------------------------------------
-    # Вывод
-    # --------------------------------------------------------
+    # ========================================================
+    # ЗАГОЛОВОК
+    # ========================================================
 
     print()
     print("=" * 75)
@@ -341,23 +377,34 @@ def print_compass(rf_point, svm_point, mean_point):
 
     print()
 
-    # Подпись верхних квадрантов
-    print(" " * 5 + "Q4 — ЛЕВЫЙ ВЕРХ" +
-          " " * 25 +
-          "Q3 — ПРАВЫЙ ВЕРХ")
+    print(
+        "       Q2 КОММУНИСТЫ"
+        + " " * 25
+        + "Q3 МОНАРХИСТЫ"
+    )
 
     print()
+
+    # ========================================================
+    # САМАЯ КАРТА
+    # ========================================================
 
     for row in grid:
         print(''.join(row))
 
     print()
 
-    print(" " * 5 + "Q1 — ЛЕВЫЙ НИЗ" +
-          " " * 27 +
-          "Q2 — ПРАВЫЙ НИЗ")
+    print(
+        "       Q1 АНПРИМ"
+        + " " * 35
+        + "Q4 АНКАП"
+    )
 
     print()
+
+    # ========================================================
+    # ЛЕГЕНДА
+    # ========================================================
 
     print("R = Random Forest")
     print("S = SVM")
@@ -365,6 +412,10 @@ def print_compass(rf_point, svm_point, mean_point):
     print("░ = область расхождения моделей")
 
     print()
+
+    # ========================================================
+    # КООРДИНАТЫ
+    # ========================================================
 
     print(
         f"Random Forest : "
@@ -377,7 +428,7 @@ def print_compass(rf_point, svm_point, mean_point):
     )
 
     print(
-        f"Средняя точка  : "
+        f"Средняя точка : "
         f"({mean_x:+.3f}, {mean_y:+.3f})"
     )
 
@@ -395,7 +446,7 @@ def print_compass(rf_point, svm_point, mean_point):
 
 
 # ============================================================
-# 10. ПОЛИТИЧЕСКИЙ КОМПАС
+# 10. РАСЧЁТ ПОЛИТИЧЕСКОГО КОМПАСА
 # ============================================================
 
 def political_compass():
@@ -415,11 +466,18 @@ def political_compass():
         random_state=0
     )
 
-    forest.fit(X_train, y_train)
+    forest.fit(
+        X_train,
+        y_train
+    )
 
-    rf_probabilities = forest.predict_proba(X_test)
+    rf_probabilities = forest.predict_proba(
+        X_test
+    )
 
-    rf_mean_probabilities = rf_probabilities.mean(axis=0)
+    rf_mean_probabilities = (
+        rf_probabilities.mean(axis=0)
+    )
 
     # ========================================================
     # SVM
@@ -434,23 +492,29 @@ def political_compass():
         )
     )
 
-    svm.fit(X_train, y_train)
+    svm.fit(
+        X_train,
+        y_train
+    )
 
-    svm_scores = svm.decision_function(X_test)
+    svm_scores = svm.decision_function(
+        X_test
+    )
 
     svm_probabilities = np.array([
         softmax(row)
         for row in svm_scores
     ])
 
-    svm_mean_probabilities = svm_probabilities.mean(axis=0)
+    svm_mean_probabilities = (
+        svm_probabilities.mean(axis=0)
+    )
 
     # ========================================================
-    # Сопоставление классов
+    # СОПОСТАВЛЯЕМ КЛАССЫ
     # ========================================================
 
     rf_prob = {}
-    svm_prob = {}
 
     for class_number, probability in zip(
         forest.classes_,
@@ -458,10 +522,14 @@ def political_compass():
     ):
 
         label = str(
-            le.inverse_transform([class_number])[0]
+            le.inverse_transform(
+                [class_number]
+            )[0]
         ).lower()
 
         rf_prob[label] = probability
+
+    svm_prob = {}
 
     for class_number, probability in zip(
         svm[-1].classes_,
@@ -469,19 +537,25 @@ def political_compass():
     ):
 
         label = str(
-            le.inverse_transform([class_number])[0]
+            le.inverse_transform(
+                [class_number]
+            )[0]
         ).lower()
 
         svm_prob[label] = probability
 
     # ========================================================
-    # Если вдруг CSV содержит Q1 вместо q1
+    # ПОЛУЧЕНИЕ Q1-Q4
     # ========================================================
 
     def get_probability(prob_dict, q):
 
+        # Нормальный вариант
+
         if q in prob_dict:
             return prob_dict[q]
+
+        # На случай Q1 вместо q1
 
         if q.upper() in prob_dict:
             return prob_dict[q.upper()]
@@ -503,27 +577,29 @@ def political_compass():
     ]
 
     # ========================================================
-    # НОРМАЛИЗУЕМ НА ВСЯКИЙ СЛУЧАЙ
+    # НОРМАЛИЗАЦИЯ
     # ========================================================
 
     rf_sum = sum(rf_values)
 
     if rf_sum > 0:
+
         rf_values = [
-            x / rf_sum
-            for x in rf_values
+            value / rf_sum
+            for value in rf_values
         ]
 
     svm_sum = sum(svm_values)
 
     if svm_sum > 0:
+
         svm_values = [
-            x / svm_sum
-            for x in svm_values
+            value / svm_sum
+            for value in svm_values
         ]
 
     # ========================================================
-    # ВЫВОД ПРОБНОСТЕЙ
+    # ТАБЛИЦА ВЕРОЯТНОСТЕЙ
     # ========================================================
 
     print()
@@ -549,12 +625,16 @@ def political_compass():
         )
 
     # ========================================================
-    # КООРДИНАТЫ
+    # КООРДИНАТЫ RF
     # ========================================================
 
     rf_point = probabilities_to_point(
         rf_values
     )
+
+    # ========================================================
+    # КООРДИНАТЫ SVM
+    # ========================================================
 
     svm_point = probabilities_to_point(
         svm_values
@@ -570,7 +650,7 @@ def political_compass():
     )
 
     # ========================================================
-    # КОМПАС
+    # ASCII-КОМПАС
     # ========================================================
 
     print_compass(
